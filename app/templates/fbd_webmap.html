@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Food Bank of Delaware - Mapping our Impact</title>
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding-top: 20px;
+      padding-left: 0;
+      height: 98%;
+      width: 100%;
+      border: 0;
+    }
+
+    #navbar {
+      position: fixed;
+      height: 70px;
+      background-color: white;
+      top: 0;
+      padding: 0;
+      margin-bottom:10;
+      border-width: 0;
+      width: 100%;
+
+    }
+
+    #text {
+      height: 20px;
+      display: inline-block;
+      color: #036954;
+      font:22px impact, sans-serif;
+
+    }
+    
+    #logo {
+      height: 40px;
+      display: inline-block;
+      position: middle;
+      padding: 0;
+      margin: 0;
+      margin-right: 20px;
+      margin-left: 20px;
+      padding-top: 5px;
+      padding-bottom: 0;
+    }
+    
+    body {
+      margin: 0;
+    }
+    
+    
+  </style>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.4/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.4/"></script>
+  <script>
+    require([
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/GroupLayer",
+      "esri/layers/FeatureLayer",
+      "esri/widgets/LayerList",
+      "esri/widgets/BasemapToggle",
+      "esri/widgets/Home",
+      "esri/widgets/Compass",
+      "esri/widgets/ScaleBar",
+      "dojo/domReady!"
+    ], function(
+      Map, MapView, GroupLayer, FeatureLayer, LayerList, BasemapToggle, Compass, Home, ScaleBar
+    ) {
+
+      // Create layer showing household income.
+
+      var householdIncomeLayer = new FeatureLayer({
+        url: "https://services6.arcgis.com/VWg6bM7M20Uy0LUO/arcgis/rest/services/sites_gjson/FeatureServer/0",
+        title: "sites"
+      });
+
+      // Create layer showing median net worth.
+      // Set visibility to false so it's not visible on startup.
+
+      var medianNetWorthLayer = new FeatureLayer({
+        url: "https://services6.arcgis.com/VWg6bM7M20Uy0LUO/arcgis/rest/services/warehouses/FeatureServer/0",
+        title: "warehouses",
+        visibility: false
+      });
+      
+     
+
+      //-----------------------------------------------------------//
+      // Create Geographic layers
+
+      // Create zipcode boundaries layer
+      var zipcodeBoundaries = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/de_zipcodes/FeatureServer/0",
+        title: "Zipcode Areas",
+        visibility: false
+      });
+
+      // Create zipcode boundaries layer
+      var countyBoundaries = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/de_counties/FeatureServer/0",
+        title: "County Boundaries",
+        visibility: false
+      });
+
+      // Create legislative districst boundaries layer
+      var legislativeDistricts = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/legislative_districts/FeatureServer",
+        title: "Legislative Districts",
+        visibility: false
+      });
+
+      // Create GroupLayer for geographic layers
+      
+      var geographicBoundaries = new GroupLayer({
+        title: "Geographic Layers",
+        visibility: true,
+        visibilityMode: "independent",
+        layers: [zipcodeBoundaries, countyBoundaries, legislativeDistricts],
+        opacity: 0.75
+      });
+
+      //-----------------------------------------------------------//
+      // Create need layers
+
+      // Create poverty by zipcode layer
+      var povertyLayer = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/poverty_rate/FeatureServer/0",
+        title: "Poverty Rate",
+        visibility: false
+      });
+
+      // Create food insecurity rate layer
+      var foodInsecurity = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/FI_rate/FeatureServer/0",
+        title: "Food Insecurity Rate",
+        visibility: false
+      });
+    
+
+      // Create SNAP eligibility rate layer
+      var snapEligibility = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/SNAP_eligibility/FeatureServer/0",
+        title: "SNAP Eligibility",
+        visibility: false
+      });
+
+      // Create SNAP participation layer
+      var snapEnrollment = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/SNAP_enrollment/FeatureServer/0",
+        title: "SNAP Enrollment",
+        visibility: false
+      });
+
+      // Create SNAP participation layer
+      var totalMealGap = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/total_meal_gap/FeatureServer/0",
+        title: "Total Meal Gap",
+        visibility: false
+      });
+
+      //TEMP: placeholder for unmet meal gap layer
+
+      // Create GroupLayer for need layers
+      var needLayers = new GroupLayer({
+        title: "The Need",
+        visibility: true,
+        visibilityMode: "independent",
+        layers: [totalMealGap, snapEnrollment, snapEligibility, foodInsecurity, povertyLayer],
+        opacity: 0.75
+      });
+
+
+      //-----------------------------------------------------------//
+      // Create Impact layers
+
+      // Create school pantries layer
+      var schoolPantries = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/schoolpantries/FeatureServer/0",
+        title: "School Pantries",
+        visibility: false
+      });
+
+      // Create CACFP layer
+      var afterschoolMeals = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/afterschool_meals/FeatureServer/0",
+        title: "Afterschool Meals",
+        visibility: false
+      });
+
+
+      // Create GroupLayer for Children's nutrition programs layers
+      var childrensNutrition = new GroupLayer({
+        title: "Children's Nutrition Programs",
+        visibility: true,
+        visibilityMode: "independent",
+        layers: [schoolPantries],
+        opacity: 0.75
+      });
+
+
+      // Create GroupLayer for Hunger Relief efforts layers
+      var hungerRelief = new GroupLayer({
+        title: "Hunger Relief",
+        visibility: true,
+        visibilityMode: "independent",
+        layers: [childrensNutrition],
+        opacity: 0.75
+      });
+
+     
+      // Create GroupLayer for impact layers
+      var impactLayers = new GroupLayer({
+        title: "Our Impact",
+        visibility: true,
+        visibilityMode: "independent",
+        layers: [hungerRelief],
+        opacity: 0.75
+      });
+
+
+      // Create a map and add the group layer to it
+
+      var map = new Map({
+        basemap: "streets",
+        layers: [hungerRelief, needLayers, geographicBoundaries]
+      });
+
+      // Add the map to a MapView
+
+      var view = new MapView({
+        center: [-75.5795, 39.4],
+        zoom: 8,
+        container: "viewDiv",
+        map: map
+      });
+
+
+      /*
+      // Creates actions in the LayerList.
+
+      function defineActions(event) {
+
+        // The event object contains an item property.
+        // is is a ListItem referencing the associated layer
+        // and other properties. You can control the visibility of the
+        // item, its title, and actions using this object.
+
+        var item = event.item;
+
+        if (item.title === "US Demographics") {
+
+          // An array of objects defining actions to place in the LayerList.
+          // By making this array two-dimensional, you can separate similar
+          // actions into separate groups with a breaking line.
+
+          item.actionsSections = [
+            [{
+              title: "Go to full extent",
+              className: "esri-icon-zoom-out-fixed",
+              id: "full-extent"
+            }, {
+              title: "Layer information",
+              className: "esri-icon-description",
+              id: "information"
+            }],
+            [{
+              title: "Increase opacity",
+              className: "esri-icon-up",
+              id: "increase-opacity"
+            }, {
+              title: "Decrease opacity",
+              className: "esri-icon-down",
+              id: "decrease-opacity"
+            }]
+          ];
+        }
+      }
+
+      */
+
+      view.then(function() {
+
+        
+        // Create the LayerList widget with the associated actions
+        // and add it to the top-right corner of the view.
+
+        var layerList = new LayerList({
+          view: view,
+          // executes for each ListItem in the LayerList to format buttons
+          // listItemCreatedFunction: defineActions
+        });
+
+
+        /*
+
+        // Event listener that fires each time an action is triggered
+
+        layerList.on("trigger-action", function(event) {
+
+          // The layer visible in the view at the time of the trigger.
+          var visibleLayer = householdIncomeLayer.visible ?
+            householdIncomeLayer : medianNetWorthLayer;
+
+          // Capture the action id.
+          var id = event.action.id;
+
+          if (id === "full-extent") {
+
+            // if the full-extent action is triggered then navigate
+            // to the full extent of the visible layer
+            view.goTo(visibleLayer.fullExtent);
+
+          } else if (id === "information") {
+
+            // if the information action is triggered, then
+            // open the item details page of the service layer
+            window.open(visibleLayer.url);
+
+          } else if (id === "increase-opacity") {
+
+            // if the increase-opacity action is triggered, then
+            // increase the opacity of the GroupLayer by 0.25
+
+            if (demographicGroupLayer.opacity < 1) {
+              demographicGroupLayer.opacity += 0.25;
+            }
+          } else if (id === "decrease-opacity") {
+
+            // if the decrease-opacity action is triggered, then
+            // decrease the opacity of the GroupLayer by 0.25
+
+            if (demographicGroupLayer.opacity > 0) {
+              demographicGroupLayer.opacity -= 0.25;
+            }
+         }
+        });
+
+        */
+
+        // Add layerList widget to the top right corner of the view
+        view.ui.add(layerList, "top-right");
+        
+        
+        // create compass widget
+        var compassWidget = new Compass({
+          view: view
+        });
+
+        // Add the Compass widget to the top left corner of the view
+        view.ui.add(compassWidget, "top-left");
+        
+        // // 1 - Create BasemapToggle widget
+        // var toggle = new BasemapToggle({
+        //   // 2 - Set properties
+        //   view: view, // view that provides access to the map's 'topo' basemap
+        //   nextBasemap: "hybrid" // allows for toggling to the 'hybrid' basemap
+        // });
+
+        // // Add widget to the top right corner of the view
+        // view.ui.add(toggle, "bottom-left");
+        
+        // create home button widget
+        var homeBtn = new Home({
+          view: view
+        });
+  
+        // Add the home button to the top left corner of the view
+        view.ui.add(homeBtn, "top-left");
+        
+        //create scale bar widget
+        var scaleBar = new ScaleBar({
+          view: view,
+          unit: "dual" // The scale bar displays both metric and non-metric units.
+        });
+  
+        // Add the widget to the bottom left corner of the view
+        view.ui.add(scaleBar, {
+          position: "bottom-left"
+        });
+        
+      });
+      
+    });
+  </script>
+</head>
+
+<body>
+  <div id="navbar">
+    <div id="text">
+      <a href="www.fbd.org" style="text-decoration:none">
+        <img id="logo" alt="logo" 
+        src="https://castellanicreative.files.wordpress.com/2013/12/food-bank-logo.jpg" height="38" 
+        width="68">
+      </a>
+    </div>
+    <div id="text">    </div>
+    <div id="text">Mapping Our Impact</div>
+  </div>
+  <div id="viewDiv">
+  </div>
+</body>
+</html>
