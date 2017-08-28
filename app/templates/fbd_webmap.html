@@ -135,7 +135,7 @@
         visible: true,
         visibilityMode: "independent",
         layers: [backpacks, summerMeals, afterSchool, schoolPantries],
-        opacity: 0.75
+        opacity: 1
       });
 
 
@@ -159,7 +159,7 @@
         visible: true,
         visibilityMode: "independent",
         layers: [mobilePantry, seniorMeals, childrensNutrition],
-        opacity: 0.75
+        opacity: 1
       });
 
 
@@ -184,7 +184,7 @@
         visible: true,
         visibilityMode: "exlcusive",
         layers: [wicEd],
-        opacity: 0.75
+        opacity: 1
       });
 
      
@@ -194,7 +194,7 @@
         visible: true,
         visibilityMode: "independent",
         layers: [educationOutreach, hungerRelief],
-        opacity: 0.75
+        opacity: 1
       });
 
 
@@ -219,7 +219,7 @@
         visible: true,
         visibilityMode: "independent",
         layers: [foodClosets, soupKitchens],
-        opacity: 0.75
+        opacity: 1
       });
 
 
@@ -241,10 +241,17 @@
         visible: false
       });
 
-      // Create legislative districst boundaries layer
-      var legislativeDistricts = new FeatureLayer({
-        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/legislative_districts/FeatureServer",
-        title: "Legislative Districts",
+      // Create senate legislative districst boundaries layer
+      var senateLegislativeDistricts = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/senate_legislative_districts/FeatureServer/0",
+        title: "Senate Legislative Districts",
+        visible: false
+      });
+
+      // Create repre districst boundaries layer
+      var repLegislativeDistricts = new FeatureLayer({
+        url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/rep_legislative_districts/FeatureServer/0",
+        title: "Representative Legislative Districts",
         visible: false
       });
 
@@ -254,8 +261,8 @@
         title: "Geographic Layers",
         visible: true,
         visibilityMode: "independent",
-        layers: [zipcodeBoundaries, countyBoundaries, legislativeDistricts],
-        opacity: 0.75
+        layers: [zipcodeBoundaries, countyBoundaries, senateLegislativeDistricts, repLegislativeDistricts],
+        opacity: 1
       });
 
       //-----------------------------------------------------------//
@@ -312,7 +319,7 @@
         visible: true,
         visibilityMode: "independent",
         layers: [totalMealGap, snapEnrollment, snapEligibility, foodInsecurity, medIncome,   povertyLayer],
-        opacity: 0.75
+        opacity: 1
       });
 
       // Create a map and add the group layer to it
