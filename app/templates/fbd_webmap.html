@@ -11,7 +11,7 @@
       position: fixed;
       padding-top: 20px;
       padding-left: 0;
-      height: 98%;
+      height: 90%;
       width: 100%;
       border: 0;
     }
@@ -70,34 +70,87 @@
       "esri/layers/FeatureLayer",
       "esri/widgets/LayerList",
       "esri/widgets/Popup",
-      "esri/widgets/BasemapToggle",
       "esri/widgets/Home",
-      "esri/widgets/Compass",
       "esri/widgets/ScaleBar",
+      "esri/widgets/Search",
+      "esri/widgets/Legend",
+      "esri/widgets/Popup",
+      "esri/PopupTemplate",
       "dojo/domReady!"
     ], function(
-      Map, MapView, GroupLayer, FeatureLayer, LayerList, BasemapToggle, Compass, Home, ScaleBar
+      Map, MapView, GroupLayer, FeatureLayer, LayerList, BasemapToggle, Home, ScaleBar, Search, Legend, PopupTemplate, Popup
     ) {
 
-      // Create layer showing household income.
-
-      var householdIncomeLayer = new FeatureLayer({
-        url: "https://services6.arcgis.com/VWg6bM7M20Uy0LUO/arcgis/rest/services/sites_gjson/FeatureServer/0",
-        title: "sites"
+      //create the map
+      var map = new Map({
+        basemap: "streets",
       });
 
-      // Create layer showing median net worth.
-      // Set visible to false so it's not visible on startup.
+      // Add the map to a MapView
 
-      var warehouses = new FeatureLayer({
-        url: "https://services6.arcgis.com/VWg6bM7M20Uy0LUO/arcgis/rest/services/warehouses/FeatureServer/0",
-        title: "Warehouses",
-        visible: true
+      var view = new MapView({
+        center: [-75.5795, 39.4],
+        zoom: 8,
+        container: "viewDiv",
+        map: map,
+        popup: {
+          dockEnabled: false,
+          dockOptions: {
+            buttonEnabled: false,
+            breakpoint: false
+          }
+        }
       });
+
+      //-----------------------------------------------------------//
+      // Create Pop-up templates 
+      //-----------------------------------------------------------//
+      var afterschoolTemplate = {
+        title: "After School Meal Site",
+
+          // Set content elements in the order to display.
+          // The first element displayed here is the fieldInfos.
+          content: [{
+            // It is also possible to set the fieldInfos outside of the content
+            // directly in the popupTemplate. If no fieldInfos is specifically set
+            // in the content, it defaults to whatever may be set within the popupTemplate.
+            type: "fields",
+            fieldInfos: [{
+              fieldName: "NAME",
+              visible: true,
+              label: "Name",
+              format: {
+                places: 3,
+                digitSeparator: true
+              }
+              }, {
+              fieldName: "Address",
+              visible: true,
+              label: "Address",
+              format: {
+                places: 0,
+                digitSeparator: true
+              }
+              }, {
+              fieldName: "City",
+              visible: true,
+              label: "City",
+              format: {
+                places: 0,
+                digitSeparator: true
+              }
+              }, {
+              fieldName: "MD_1617",
+              visible: true,
+              label: "Meals Distributed FY 16-17",
+              format: {
+                places: 0,
+                digitSeparator: true
+              }
+            }] 
+          }]
+        };
       
-
-
-
       //-----------------------------------------------------------//
       // Create Impact layers
 
@@ -112,7 +165,9 @@
       var afterSchool = new FeatureLayer({
         url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/afterschool_meals_template/FeatureServer/0",
         title: "Afterschool Meals",
-        visible: false
+        visible: true,
+        outFields: ["*"],
+        popupTemplate: afterschoolTemplate
       });
 
       // Create CACFP layer
@@ -238,7 +293,7 @@
       var zipcodeBoundaries = new FeatureLayer({
         url: "https://services3.arcgis.com/amVpls9Mj8wDvAbS/arcgis/rest/services/de_zipcodes/FeatureServer/0",
         title: "Zipcode Areas",
-        visible: false
+        visible: true
       });
 
       // Create zipcode boundaries layer
@@ -267,7 +322,7 @@
       var geographicBoundaries = new GroupLayer({
         title: "Geographic Layers",
         visible: true,
-        visibilityMode: "independent",
+        visibilityMode: "exclusive",
         layers: [zipcodeBoundaries, countyBoundaries, senateLegislativeDistricts, repLegislativeDistricts],
         opacity: 1
       });
@@ -338,19 +393,7 @@
 
       // Create a map and add the group layer to it
 
-      var map = new Map({
-        basemap: "streets",
-        layers: [needLayers, partnerLayers, impactLayers, geographicBoundaries, ]
-      });
 
-      // Add the map to a MapView
-
-      var view = new MapView({
-        center: [-75.5795, 39.4],
-        zoom: 8,
-        container: "viewDiv",
-        map: map
-      });
 
 
       /*
@@ -398,7 +441,19 @@
 
       view.then(function() {
 
-        
+        //create and add the search bar widget
+        var searchWidget = new Search({
+          view: view
+
+        });
+
+        // Adds the search widget below other elements in
+        // the top left corner of the view
+        view.ui.add(searchWidget, {
+          index: 2,
+          position: "top-right"
+
+        });
         // Create the LayerList widget with the associated actions
         // and add it to the top-right corner of the view.
 
@@ -407,6 +462,17 @@
           // executes for each ListItem in the LayerList to format buttons
           // listItemCreatedFunction: defineActions
         });
+        
+        // Add layerList widget to the top right corner of the view
+        view.ui.add(layerList, "top-right");
+
+        // Create legend widget
+        var legend = new Legend({
+            view: view,
+          });
+        
+        view.ui.add(legend, "bottom-left");
+
 
 
         /*
@@ -455,17 +521,16 @@
 
         */
 
-        // Add layerList widget to the top right corner of the view
-        view.ui.add(layerList, "top-right");
+       
         
         
-        // create compass widget
-        var compassWidget = new Compass({
-          view: view
-        });
+        // // create compass widget
+        // var compassWidget = new Compass({
+        //   view: view
+        // });
 
-        // Add the Compass widget to the top left corner of the view
-        view.ui.add(compassWidget, "top-left");
+        // // Add the Compass widget to the top left corner of the view
+        // view.ui.add(compassWidget, "top-left");
         
         // // 1 - Create BasemapToggle widget
         // var toggle = new BasemapToggle({
@@ -493,11 +558,21 @@
   
         // Add the widget to the bottom left corner of the view
         view.ui.add(scaleBar, {
-          position: "bottom-left"
+          position: "bottom-right"
         });
         
       });
       
+      map.add(needLayers);
+      
+      map.add(geographicBoundaries);
+
+      map.add(impactLayers);
+
+      map.add(afterSchool);
+
+
+
     });
   </script>
 </head>
